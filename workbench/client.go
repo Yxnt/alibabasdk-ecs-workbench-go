@@ -15,7 +15,10 @@ type Workbench struct {
 	Client openapi.Client
 }
 
-type WorkbenchClient interface{}
+type WorkbenchClient interface {
+	LoginInstance()
+	LoginInstanceWithOptions()
+}
 
 func NewWorkbenchClient(config *openapi.Config) (workbench *Workbench, err error) {
 	client := openapi.Client{}
@@ -57,4 +60,12 @@ func (c *Workbench) getEndpoint(regionID *string, endpointRule *string, network 
 	}
 	_result = _body
 	return _result, _err
+}
+
+func (c *Workbench) LoginInstance() {
+	return
+}
+
+func (c *Workbench) LoginInstanceWithOptions() {
+	return
 }
