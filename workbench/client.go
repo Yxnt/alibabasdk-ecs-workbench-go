@@ -3,8 +3,10 @@ package workbench
 import (
 	openapi "github.com/alibabacloud-go/darabonba-openapi/client"
 	endpointutil "github.com/alibabacloud-go/endpoint-util/service"
+	openapiutil "github.com/alibabacloud-go/openapi-util/service"
 	util "github.com/alibabacloud-go/tea-utils/service"
 	"github.com/alibabacloud-go/tea/tea"
+	"github.com/yxnt/alibabasdk-ecs-workbench-go/workbench/models"
 )
 
 var (
@@ -43,29 +45,73 @@ func NewWorkbenchClient(config *openapi.Config) (workbench *Workbench, err error
 	return
 }
 
-func (c *Workbench) getEndpoint(regionID *string, endpointRule *string, network *string, suffix *string, endpointMap map[string]*string, endpoint *string) (_result *string, _err error) {
+func (c *Workbench) getEndpoint(regionID *string, endpointRule *string, network *string, suffix *string, endpointMap map[string]*string, endpoint *string) (result *string, err error) {
 	if !tea.BoolValue(util.Empty(endpoint)) {
-		_result = endpoint
-		return _result, _err
+		result = endpoint
+		return result, err
 	}
 
 	if !tea.BoolValue(util.IsUnset(endpointMap)) && !tea.BoolValue(util.Empty(endpointMap[tea.StringValue(regionID)])) {
-		_result = endpointMap[tea.StringValue(regionID)]
-		return _result, _err
+		result = endpointMap[tea.StringValue(regionID)]
+		return result, err
 	}
 
 	_body, _err := endpointutil.GetEndpointRules(&PRODUCT_ID, regionID, endpointRule, network, suffix)
 	if _err != nil {
-		return _result, _err
+		return result, err
 	}
-	_result = _body
-	return _result, _err
-}
-
-func (c *Workbench) LoginInstance() {
+	result = _body
 	return
 }
 
-func (c *Workbench) LoginInstanceWithOptions() {
+func (c *Workbench) LoginInstance(request *models.LoginInstanceRequest) (resp *models.LoginInstanceResponse, err error) {
+	runtime := &util.RuntimeOptions{}
+	resp, err = c.LoginInstanceWithOptions(request, runtime)
+	return
+}
+
+func (c *Workbench) LoginInstanceWithOptions(request *models.LoginInstanceRequest, runtime *util.RuntimeOptions) (resp *models.LoginInstanceResponse, err error) {
+	if err = util.ValidateModel(request); err != nil {
+		return
+	}
+
+	query := map[string]interface{}{}
+
+	if !tea.BoolValue(util.IsUnset(request.InstanceLoginInfo)) {
+		query["InstanceLoginInfo"] = request.InstanceLoginInfo
+	}
+
+	if !tea.BoolValue(util.IsUnset(request.PartnerInfo)) {
+		query["PartnerInfo"] = request.PartnerInfo
+	}
+
+	if !tea.BoolValue(util.IsUnset(request.UserAccount)) {
+		query["UserAccount"] = request.UserAccount
+	}
+
+	req := &openapi.OpenApiRequest{
+		Query: openapiutil.Query(query),
+	}
+
+	params := &openapi.Params{
+		Action:      tea.String("LoginInstance"),
+		Version:     tea.String("2020-02-20"),
+		Protocol:    tea.String("HTTPS"),
+		Pathname:    tea.String("/"),
+		Method:      tea.String("POST"),
+		AuthType:    tea.String("AK"),
+		Style:       tea.String("RPC"),
+		ReqBodyType: tea.String("formData"),
+		BodyType:    tea.String("json"),
+	}
+
+	resp = &models.LoginInstanceResponse{}
+	body, err := c.Client.CallApi(params, req, runtime)
+	if err != nil {
+		return
+	}
+
+	err = tea.Convert(body, &resp)
+
 	return
 }
