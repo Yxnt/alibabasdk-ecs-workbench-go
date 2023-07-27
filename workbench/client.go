@@ -1,6 +1,8 @@
 package workbench
 
 import (
+	"fmt"
+
 	openapi "github.com/alibabacloud-go/darabonba-openapi/client"
 	endpointutil "github.com/alibabacloud-go/endpoint-util/service"
 	openapiutil "github.com/alibabacloud-go/openapi-util/service"
@@ -18,34 +20,41 @@ type Workbench struct {
 }
 
 type WorkbenchClient interface {
-	LoginInstance()
-	LoginInstanceWithOptions()
+	SetClient(client *openapi.Client)
+	GetEndpoint(regionID *string, endpointRule *string, network *string, suffix *string, endpointMap map[string]*string, endpoint *string) (result *string, err error)
+	LoginInstance(request *models.LoginInstanceRequest) (resp *models.LoginInstanceResponseBody, err error)
+	LoginInstanceWithOptions(request *models.LoginInstanceRequest, runtime *util.RuntimeOptions) (resp *models.LoginInstanceResponseBody, err error)
 }
 
-func NewWorkbenchClient(config *openapi.Config) (workbench *Workbench, err error) {
+func NewWorkbenchClient(config *openapi.Config) (workbench WorkbenchClient, err error) {
 	client := openapi.Client{}
+	if err := client.Init(config); err != nil {
+		return nil, err
+	}
+
 	workbench = &Workbench{}
 
-	if endpoint, err := workbench.getEndpoint(client.RegionId, client.EndpointRule, client.Network, client.Suffix, client.EndpointMap, client.Endpoint); err != nil {
-		return nil, err
-	} else {
-		config.Endpoint = endpoint
+	client.EndpointRule = tea.String("regional")
+	client.EndpointMap = map[string]*string{
+		"cn-beijing":  tea.String("ecs-workbench.cn-beijing.aliyuncs.com"),
+		"cn-hangzhou": tea.String("ecs-workbench.cn-hangzhou.aliyuncs.com"),
 	}
 
 	if err = client.CheckConfig(config); err != nil {
 		return nil, err
 	}
-
-	if err := client.Init(config); err != nil {
+	if endpoint, err := workbench.GetEndpoint(client.RegionId, client.EndpointRule, client.Network, client.Suffix, client.EndpointMap, client.Endpoint); err != nil {
 		return nil, err
+	} else {
+		client.Endpoint = endpoint
 	}
 
-	workbench.Client = client
+	workbench.SetClient(&client)
 
-	return
+	return workbench, nil
 }
 
-func (c *Workbench) getEndpoint(regionID *string, endpointRule *string, network *string, suffix *string, endpointMap map[string]*string, endpoint *string) (result *string, err error) {
+func (c *Workbench) GetEndpoint(regionID *string, endpointRule *string, network *string, suffix *string, endpointMap map[string]*string, endpoint *string) (result *string, err error) {
 	if !tea.BoolValue(util.Empty(endpoint)) {
 		result = endpoint
 		return result, err
@@ -64,13 +73,13 @@ func (c *Workbench) getEndpoint(regionID *string, endpointRule *string, network 
 	return
 }
 
-func (c *Workbench) LoginInstance(request *models.LoginInstanceRequest) (resp *models.LoginInstanceResponse, err error) {
+func (c *Workbench) LoginInstance(request *models.LoginInstanceRequest) (resp *models.LoginInstanceResponseBody, err error) {
 	runtime := &util.RuntimeOptions{}
 	resp, err = c.LoginInstanceWithOptions(request, runtime)
 	return
 }
 
-func (c *Workbench) LoginInstanceWithOptions(request *models.LoginInstanceRequest, runtime *util.RuntimeOptions) (resp *models.LoginInstanceResponse, err error) {
+func (c *Workbench) LoginInstanceWithOptions(request *models.LoginInstanceRequest, runtime *util.RuntimeOptions) (resp *models.LoginInstanceResponseBody, err error) {
 	if err = util.ValidateModel(request); err != nil {
 		return
 	}
@@ -95,7 +104,7 @@ func (c *Workbench) LoginInstanceWithOptions(request *models.LoginInstanceReques
 
 	params := &openapi.Params{
 		Action:      tea.String("LoginInstance"),
-		Version:     tea.String("2020-02-20"),
+		Version:     tea.String("2022-02-20"),
 		Protocol:    tea.String("HTTPS"),
 		Pathname:    tea.String("/"),
 		Method:      tea.String("POST"),
@@ -105,13 +114,19 @@ func (c *Workbench) LoginInstanceWithOptions(request *models.LoginInstanceReques
 		BodyType:    tea.String("json"),
 	}
 
-	resp = &models.LoginInstanceResponse{}
+	resp = &models.LoginInstanceResponseBody{}
+	fmt.Println(req)
 	body, err := c.Client.CallApi(params, req, runtime)
 	if err != nil {
 		return
 	}
 
+	fmt.Println(body)
 	err = tea.Convert(body, &resp)
 
 	return
+}
+
+func (c *Workbench) SetClient(client *openapi.Client) {
+	c.Client = *client
 }

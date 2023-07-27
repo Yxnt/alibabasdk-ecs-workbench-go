@@ -3,7 +3,7 @@ package models
 type LoginInstanceResponse struct {
 	Headers    map[string]string         `json:"headers"`
 	StatusCode int64                     `json:"statusCode"`
-	Body       LoginInstanceResponseBody `json:"body"`
+	Root       LoginInstanceResponseBody `json:"body"`
 }
 
 type LoginInstanceResponseBody struct {
@@ -11,7 +11,7 @@ type LoginInstanceResponseBody struct {
 	Message   string                        `json:"message"`
 	RequestId string                        `json:"requestId"`
 	Root      LoginInstanceResponseBodyRoot `json:"Root"`
-	Success   string                        `json:"success"`
+	Success   bool                          `json:"success"`
 }
 
 type LoginInstanceResponseBodyRoot struct {
